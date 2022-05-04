@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: Example Service API Spec
+  description: No description available
+  version: v1
+servers:
+- url: /serviceName/
+  description: The server
+tags:
+- name: example service api spec
+paths:
+  /v1/exchange/currencies:
+    summary: /currencies
+    description: No description available
+    get:
+      tags:
+      - exchange
+      summary: Returns all available currencies.
+      description: Returns all available currencies.
+      operationId: getCurrencies
+      responses:
+        "200":
+          description: No description available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Currencies'
+              examples:
+                example:
+                  value:
+                  - code: EUR
+                  - code: GBP
+                  - code: USD
+        "400":
+          description: BadRequest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestError'
+              examples:
+                example:
+                  value:
+                    message: Bad Request
+                    errors:
+                    - message: "Value Exceeded. Must be between {min} and {max}."
+                      key: common.api.shoesize
+                      context:
+                        max: "50"
+                        min: "1"
+        "500":
+          description: InternalServerError
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                example:
+                  value:
+                    message: Description of error
+  /v1/exchange/rates:
+    summary: /rates
+    description: No description available
+    get:
+      tags:
+      - exchange
+      summary: Returns the exchange rates for a particular pair of currencies in a
+        given time period.
+      description: Returns the exchange rates for a particular pair of currencies
+        in a given time period.
+      operationId: getRates
+      parameters:
+      - name: source
+        in: query
+        description: The currency that we want to convert from.
+        required: true
+        schema:
+          type: string
+        examples:
+          example:
+            summary: example
+            value: EUR
+      - name: target
+        in: query
+        description: The currency that we want to convert to.
+        required: true
+        schema:
+          type: string
+        examples:
+          example:
+            summary: example
+            value: USD
+      - name: from
+        in: query
+        description: "The starting date of the list of exchange rates (date only,\
+          \ always starting at 00:00 of that day)"
+        required: false
+        schema:
+          type: string
+          format: date
+        examples:
+          example:
+            summary: example
+            value: 2019-07-01
+      - name: to
+        in: query
+        description: "The ending date of the list of exchange rates (date only, always\
+          \ ending at 23:59 of that day)"
+        required: false
+        schema:
+          type: string
+          format: date
+        examples:
+          example:
+            summary: example
+            value: 2019-07-01
+      responses:
+        "200":
+          description: No description available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRates'
+              examples:
+                example:
+                  value:
+                  - rate: 1.1279
+                    source: EUR
+                    target: USD
+                    time: 2019-03-13T00:00:00+0000
+                  - rate: 1.12504
+                    source: EUR
+                    target: USD
+                    time: 2019-03-12T00:00:00+0000
+                  - rate: 1.12235
+                    source: EUR
+                    target: USD
+                    time: 2019-03-11T00:00:00+0000
+                  - rate: 1.12341
+                    source: EUR
+                    target: USD
+                    time: 2019-03-10T00:00:00+0000
+        "400":
+          description: BadRequest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestError'
+              examples:
+                example:
+                  value:
+                    message: Bad Request
+                    errors:
+                    - message: "Value Exceeded. Must be between {min} and {max}."
+                      key: common.api.shoesize
+                      context:
+                        max: "50"
+                        min: "1"
+        "500":
+          description: InternalServerError
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                example:
+                  value:
+                    message: Description of error
+components:
+  schemas:
+    BadRequestError:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+          description: Any further information
+        errors:
+          type: array
+          description: Detailed error information
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+      x-java-type: com.backbase.buildingblocks.presentation.errors.BadRequestException
+    Currencies:
+      type: array
+      items:
+        $ref: '#/components/schemas/CurrencyItem'
+    CurrencyItem:
+      required:
+      - code
+      type: object
+      properties:
+        code:
+          type: string
+          description: Currency code
+    ErrorItem:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Default Message. Any further information.
+        key:
+          type: string
+          description: "{capability-name}.api.{api-key-name}. For generated validation\
+            \ errors this is the path in the document the error resolves to. e.g.\
+            \ object name + '.' + field"
+        context:
+          type: object
+          description: Context can be anything used to construct localised messages.
+          x-java-type: "java.util.Map<String,String>"
+      description: A validation error
+    ExchangeRateItem:
+      required:
+      - rate
+      - source
+      - target
+      - time
+      type: object
+      properties:
+        rate:
+          type: number
+          description: Exchange rate value.
+          x-java-type: java.math.BigDecimal
+        source:
+          type: string
+          description: Source(send) currency code
+        target:
+          type: string
+          description: Target(receive) currency code
+        time:
+          type: string
+          description: Timestamp for exchange rate.
+    ExchangeRates:
+      type: array
+      items:
+        $ref: '#/components/schemas/ExchangeRateItem'
+    ForbiddenError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Any further information
+        errors:
+          type: array
+          description: Detailed error information
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+      x-java-type: com.backbase.buildingblocks.presentation.errors.ForbiddenException
+    InternalServerError:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+          description: Further Information
+      description: Represents HTTP 500 Internal Server Error
+      x-java-type: com.backbase.buildingblocks.presentation.errors.InternalServerErrorException
+    NotAcceptableError:
+      type: object
+      properties:
+        message:
+          type: string
+        supportedMediaTypes:
+          type: array
+          description: List of supported media types for this endpoint
+          items:
+            type: string
+      x-java-type: com.backbase.buildingblocks.presentation.errors.NotAcceptableException
+    NotFoundError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Any further information
+        errors:
+          type: array
+          description: Detailed error information
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+      x-java-type: com.backbase.buildingblocks.presentation.errors.NotFoundException
+    UnauthorizedAltError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Any further information
+        errors:
+          type: array
+          description: Detailed error information
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+      x-java-type: com.backbase.buildingblocks.presentation.errors.UnauthorizedException
+    UnauthorizedError:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+    UnsupportedMediaTypeError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Any further information
+        errors:
+          type: array
+          description: Detailed error information
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+      x-java-type: com.backbase.buildingblocks.presentation.errors.UnsupportedMediaTypeException
